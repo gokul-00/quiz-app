@@ -8,39 +8,80 @@ const submit = document.getElementById('submit')
 const scoreCard = document.getElementById('score-card')
 const quizContainer = document.querySelector('.quiz-container')
 const restartBtn = document.getElementById('restart')
-let random_questions, currentIndex = 0;
-let score = 0;
+const enter = document.getElementById('enter')
+const inputName = document.getElementById('name')
+const form = document.getElementById('input-name')
+const display = document.querySelector('#time')
+const timer = document.getElementById('timer')
+const navItems = document.getElementsByClassName('nav-item')
+let random_questions, currentIndex = 0, name = 'player';
+let score = 0, answeredQuestions = 0;
+
+//EventListeners
+
+enter.addEventListener('click',(e) => {
+    e.preventDefault()
+    if(inputName != null){
+      name = inputName.value 
+      inputName.placeholder = name 
+      inputName.value = ''
+    }
+
+})
 
 restartBtn.addEventListener('click', () => {
     location.reload()
 })
 
-submit.addEventListener('click', () => {
+const submitQuiz = () => {
+    timer.classList.add('hide')
+    document.querySelector('.pagination').classList.add('hide')
     quizContainer.classList.add('hide')
     restartBtn.classList.remove('hide')
-    scoreCard.innerHTML = `Your Score : ${score}/${questions.length}`
-})
+    scoreCard.innerHTML = `<p> hey <b>${name}</b>,</p>
+    <p>Number of Questions answered : ${answeredQuestions}</p>
+    <p>Number of Questions Answered Correctly : ${score} </p>
+    <p>Correct answer ratio : ${score}:${answeredQuestions}</p>
+    <p>time : ${(1-minutes)*60 + 60-seconds} seconds</p>`
+}
+
+submit.addEventListener('click', submitQuiz)
 
 startBtn.addEventListener('click', () => {
-    console.log(random_questions[currentIndex].question)
+    startTimer(60 * 2, display);
     question.classList.remove('hide')
-    console.log(currentIndex)
     question.innerHTML = random_questions[currentIndex].question
     showOption(currentIndex)
     startBtn.classList.add('hide')
     nextBtn.classList.remove('hide')
     submit.classList.remove('hide')
+    form.classList.add('hide')
+    document.querySelector('.instruction').classList.add('hide')
+    document.querySelector('.pagination').classList.remove('hide')
 })
+
+for(let i=0;i<navItems.length;i++){
+    navItems[i].classList.add('unanswered')
+    navItems[i].addEventListener('click',()=>{
+        currentIndex = i
+        clearOptions()
+        question.innerHTML = random_questions[i].question
+        showOption(currentIndex)
+        if(currentIndex != 0){
+            prevBtn.classList.remove('hide')
+        } else if(currentIndex != navItems.length){
+            nextBtn.classList.remove('hide')
+        }
+    })
+}
 
 nextBtn.addEventListener('click', () => {
     clearOptions()
     if(currentIndex < questions.length - 1){
         question.innerHTML = random_questions[++currentIndex].question
         showOption(currentIndex)
-        console.log(currentIndex)
         prevBtn.classList.remove('hide')
     }else {
-        console.log(currentIndex)
         question.innerHTML = random_questions[currentIndex].question
         showOption(currentIndex)
         nextBtn.classList.add('hide')
@@ -54,7 +95,6 @@ prevBtn.addEventListener('click', () => {
     if(currentIndex > 0){
         question.innerHTML = random_questions[--currentIndex].question
         showOption(currentIndex)
-        console.log(currentIndex)
         if(currentIndex != 0){
             prevBtn.classList.remove('hide')     
         } else {
@@ -64,7 +104,6 @@ prevBtn.addEventListener('click', () => {
     }else {
         question.innerHTML = random_questions[currentIndex].question
         showOption(currentIndex)
-        console.log(currentIndex)
         prevBtn.classList.add('hide')
         nextBtn.classList.remove('hide')
     }
@@ -72,14 +111,12 @@ prevBtn.addEventListener('click', () => {
 })
 
 const showOption = (index) => {
-    // let output = ''
     questions[index].answers.forEach(option => {
-        // output += `<button class="${e.correct}">${e.text}</button>`
         const button = document.createElement('button')
         button.innerText = option.text
         button.classList.add('btn')
         if (option.correct) {
-        button.dataset.correct = option.correct  
+            button.dataset.correct = option.correct  
         }
         if (option.correct) {
             button.classList.add('correct')
@@ -88,16 +125,12 @@ const showOption = (index) => {
         }
         
         button.addEventListener('click', (e) => {
+            answeredQuestions++
             const selectedButton = e.target
             const correct = selectedButton.dataset.correct
-            console.log(selectedButton)
             const correctOption = document.getElementsByClassName('correct')
             const wrongOption = document.getElementsByClassName('wrong')
-             
-            console.log(option)
-            // correctOption.forEach(correct => {
-            //     correct.style.backgroundColor = 'rgb(78, 184, 78)'
-            // })
+
             for(let i=0;i<correctOption.length;i++){
                 correctOption[i].style.backgroundColor = 'rgb(78, 184, 78)'
             }
@@ -109,11 +142,14 @@ const showOption = (index) => {
                 if(!option.answered){
                  score++   
                 }
-                
+                navItems[currentIndex].classList.remove('unanswered')
+                navItems[currentIndex].classList.add('correct-answer')
             }else{
                 status.innerHTML = ' Your Answer is wrong😔'
+                navItems[currentIndex].classList.remove('unanswered')
+                navItems[currentIndex].classList.add('wrong-answer')
             }
-            console.log(score)
+
             if(questions[index].answered){
             let nodes = options.getElementsByTagName('*');
             for(let i = 0; i < nodes.length; i++){
@@ -122,22 +158,11 @@ const showOption = (index) => {
             }else{
                questions[index].answered = true 
             }
-            
-            // wrongOption.forEach(wrong => {
-            //     wrong.style.backgroundColor = 'rgb(245, 87, 87)'
-            // })
-            // if (correct) {
-            //     // button.classList.add('correct')
-            //     button.style.backgroundColor = 'rgb(78, 184, 78)'
-            // } else {
-            //     // button.classList.add('wrong')
-            //     button.style.backgroundColor = 'rgb(245, 87, 87)'
-            // }
         })
         
         options.appendChild(button)
     })
-    // return output
+
     if(questions[index].answered){
         let nodes = options.getElementsByTagName('*');
         for(let i = 0; i < nodes.length; i++){
@@ -154,6 +179,7 @@ const clearOptions = () => {
     status.innerHTML = ''
 }
 
+//questions
 const questions = [
     {
       question: 'The first case of novel coronavirus was identified in .....',
@@ -259,4 +285,28 @@ const questions = [
 
 window.addEventListener('load',() => {
     random_questions = questions.sort(() => Math.random() - 0.5)
+    
 })  
+
+
+//timer
+let minutes, seconds;
+const startTimer = (duration, display) => {
+    let timer = duration
+    setInterval(function () {
+        minutes = parseInt(timer / 60, 10);
+        seconds = parseInt(timer % 60, 10);
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        display.textContent = minutes + ":" + seconds;
+
+        if (--timer < 0) {
+            timer = duration;
+        }
+        if (minutes == 0 && seconds == 0){
+            submitQuiz()
+        }
+    }, 1000);
+}
